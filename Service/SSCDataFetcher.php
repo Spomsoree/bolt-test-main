@@ -2,87 +2,42 @@
 
 namespace App\Service;
 
-use App\Helper\Date;
-use Bolt\Enum\Statuses;
+use Bolt\Entity\Content;
 use Bolt\Factory\ContentFactory;
 use Bolt\Storage\Query;
 
 class SSCDataFetcher
 {
-    private $query;
     private $factory;
 
-    public function __construct(Query $query, ContentFactory $factory)
+    public function __construct(ContentFactory $factory)
     {
-        $this->query   = $query;
         $this->factory = $factory;
     }
 
-    public function fetch(): int
-    {
-        // Using the generic Query::getContent()
-        $rawteams = $this->query->getContent('teams', [
-            'status' => Statuses::PUBLISHED,
-        ]);
-        $teams    = iterator_to_array($rawteams->getCurrentPageResults());
-
-        // collector
-        $entries = [];
-
-        // get games
-        $entries = array_merge($entries, $this->getGames());
-
-        // get events
-        $entries = array_merge($entries, $this->getEvents());
-
-        // Using Query::getContentForTwig()
-        // which sets default parameters, like status 'published'
-        // and orderBy
-        // $entries = $this->query->getContentForTwig('games', [
-        //     'headline' => '%entry%', // search LIKE
-        // ]);
-
-        // Get entries and pages, without any filtering parameters
-        // $gamesAndEvents = $this->query->getContentForTwig('games,events');
-
-        /*
-        // Per default PagerFanta only loads 20 items per page.
-        // We do not want paging so we set value to '250'
-        $entries->setMaxPerPage(250);
-        // Finally, since all results are paginated using PagerFanta
-        // here is a few operations we can run on them.
-        $numberOfPages = $entries->getNbResults();
-        $numberOfEntries = $entries->getNbResults();
-        $currentPage = $entries->getCurrentPage();
-        $currentPageEntries = iterator_to_array($entries->getCurrentPageResults());
-
-        // And finally, let's just return entries that we found
-        // return $currentPageEntries;
-        return $currentPageEntries;
-        */
-
-        // Spomsoree: I'd save the data inside of this.
-        $results = [
-            ['title' => 'Title 1', 'text' => 'Text 1'],
-            ['title' => 'Title 2', 'text' => 'Text 2'],
+    private function upsert(Content $content) {
+        $criteria = [
+            'title' => $content->getFieldValue('headline'),
         ];
 
-        foreach ($results as $fieldData) {
-            $criteria = [
-                'title' => $fieldData['title'],
-            ];
+        $existingContent = $this->factory->upsert('test', $criteria);
 
-            $content = $this->factory->upsert('test', $criteria);
+        $existingContent->setFieldValue('title', $content->getFieldValue('headline'));
 
-            foreach ($fieldData as $name => $value) {
-                $content->setFieldValue($name, $value);
-            }
-
-            $this->factory->save($content);
-        }
-
-        return count($results);
+        $this->factory->save($existingContent);
     }
+
+    public function handleGame(Content $game) {
+        // Maybe reuse the getGame method to change data
+        $this->upsert($game);
+    }
+
+    public function handleEvent(Content $event) {
+        // Maybe reuse the getEvent method to change data
+        $this->upsert($event);
+    }
+
+    /*
 
     public function getGames(): array
     {
@@ -141,4 +96,5 @@ class SSCDataFetcher
 
         return $sscevents;
     }
+    */
 }
