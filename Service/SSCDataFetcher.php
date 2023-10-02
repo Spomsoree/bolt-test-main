@@ -4,18 +4,21 @@ namespace App\Service;
 
 use App\Helper\Date;
 use Bolt\Enum\Statuses;
+use Bolt\Factory\ContentFactory;
 use Bolt\Storage\Query;
 
 class SSCDataFetcher
 {
     private $query;
+    private $factory;
 
-    public function __construct(Query $query)
+    public function __construct(Query $query, ContentFactory $factory)
     {
-        $this->query = $query;
+        $this->query   = $query;
+        $this->factory = $factory;
     }
 
-    public function fetch(): array
+    public function fetch(): int
     {
         // Using the generic Query::getContent()
         $rawteams = $this->query->getContent('teams', [
@@ -58,8 +61,27 @@ class SSCDataFetcher
         return $currentPageEntries;
         */
 
-        return $entries; // Spomsoree: I'd save the data inside of this.
-        // return [];
+        // Spomsoree: I'd save the data inside of this.
+        $results = [
+            ['title' => 'Title 1', 'text' => 'Text 1'],
+            ['title' => 'Title 2', 'text' => 'Text 2'],
+        ];
+
+        foreach ($results as $fieldData) {
+            $criteria = [
+                'title' => $fieldData['title'],
+            ];
+
+            $content = $this->factory->upsert('test', $criteria);
+
+            foreach ($fieldData as $name => $value) {
+                $content->setFieldValue($name, $value);
+            }
+
+            $this->factory->save($content);
+        }
+
+        return count($results);
     }
 
     public function getGames(): array

@@ -25,10 +25,9 @@ class SSCController extends AbstractController
      */
     public function getRecordsFromAPI(): Response
     {
-        dump($this->service->fetch());
-        die();
+        $resultCount = $this->service->fetch();
 
-        return new Response('OK');
+        return new Response('OK: ' . $resultCount . ' records fetched');
     }
 
     /**
@@ -40,9 +39,8 @@ class SSCController extends AbstractController
      */
     public function getRecordsFromAPIWebhook(): Response
     {
-        dump($this->service->fetch());
-        die();
+        $this->service->fetch();
 
-        return new Response('OK');
+        return new Response('Ok');
     }
 }
